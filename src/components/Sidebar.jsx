@@ -17,8 +17,12 @@ function Sidebar() {
         {user?.role === "student" && (
           <>
             <NavLink to="/student">Dashboard</NavLink>
-            <NavLink to="/courses">Enroll Courses</NavLink>
-            <NavLink to="/timetable">Timetable</NavLink>
+            <NavLink to="/courses">
+              Enroll Courses {user?.registrationApproved !== 1 && "🔒"}
+            </NavLink>
+            <NavLink to="/timetable">
+              Timetable {user?.registrationApproved !== 1 && "🔒"}
+            </NavLink>
             <NavLink to="/help">Help & Support</NavLink>
             <NavLink to="/notifications" className="notification-link">
               Notifications
@@ -31,6 +35,7 @@ function Sidebar() {
        {user?.role === "admin" && (
   <>
     <NavLink to="/admin">Dashboard</NavLink>
+    <NavLink to="/admin/registrations">Registration Requests</NavLink>
     <NavLink to="/manage-courses">Manage Courses</NavLink>
     <NavLink to="/support-management">Support Tickets</NavLink>
     <NavLink to="/notifications" className="notification-link">

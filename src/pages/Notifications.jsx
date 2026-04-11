@@ -25,21 +25,21 @@ function Notifications() {
     }
   };
 
-  const getNotificationStyle = (type) => {
+  const getNotificationClass = (type) => {
     switch (type) {
       case "success":
       case "enrollment":
-        return { borderColor: "#10b981", background: "#ecfdf5" };
+        return "notification-success";
       case "warning":
       case "conflict":
-        return { borderColor: "#f59e0b", background: "#fffbeb" };
+        return "notification-warning";
       case "waitlist":
       case "info":
-        return { borderColor: "#3b82f6", background: "#eff6ff" };
+        return "notification-info";
       case "ticket":
-        return { borderColor: "#8b5cf6", background: "#f5f3ff" };
+        return "notification-ticket";
       default:
-        return { borderColor: "#6366f1", background: "#eef2ff" };
+        return "notification-system";
     }
   };
 
@@ -97,8 +97,7 @@ function Notifications() {
               .map(notification => (
                 <div 
                   key={notification.id} 
-                  className={`notification-item ${!notification.read ? "unread" : ""}`}
-                  style={getNotificationStyle(notification.type)}
+                  className={`notification-item ${getNotificationClass(notification.type)} ${!notification.read ? "unread" : ""}`}
                   onClick={() => markNotificationAsRead(notification.id)}
                 >
                   <div className="notification-icon">

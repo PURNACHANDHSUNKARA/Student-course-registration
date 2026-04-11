@@ -3,7 +3,8 @@ import { useNavigate } from "react-router-dom";
 import { AuthContext } from "../context/AuthContext";
 
 function Courses() {
-  const { courses, enrollCourse, enrollments, user } = useContext(AuthContext);
+  const { courses, enrollCourse, enrollments, user, joinWaitlist, waitlist } = useContext(AuthContext);
+  const normalizeCode = (rawCode) => String(rawCode || "").trim().toUpperCase();
   const navigate = useNavigate();
   const [searchTerm, setSearchTerm] = useState("");
   const [filterDepartment, setFilterDepartment] = useState("All");
@@ -12,14 +13,25 @@ function Courses() {
 
   // Check if user is already enrolled in a course
   const isEnrolled = (courseCode) => {
+    const normalizedCourseCode = normalizeCode(courseCode);
     return enrollments.some(
-      e => e.studentEmail === user?.email && e.course.code === courseCode
+      e => e.studentEmail === user?.email && normalizeCode(e?.course?.code) === normalizedCourseCode
+    );
+  };
+
+  // Check if user is already waitlisted
+  const isWaitlisted = (courseCode) => {
+    const normalizedCourseCode = normalizeCode(courseCode);
+    return waitlist.some(
+      w => w.studentEmail === user?.email && normalizeCode(w?.course?.code) === normalizedCourseCode
     );
   };
 
   // Get enrollment count for a course
   const getEnrollmentCount = (courseCode) => {
-    return enrollments.filter(e => e.course.code === courseCode).length;
+    const normalizedCourseCode = normalizeCode(courseCode);
+    const course = courses.find(c => normalizeCode(c?.code) === normalizedCourseCode);
+    return Number(course?.enrolled || 0);
   };
 
   // Check if course is full
@@ -32,18 +44,22 @@ function Courses() {
     return course.capacity - getEnrollmentCount(course.code);
   };
 
-  // Get unique departments
-  const departments = [...new Set(courses.map(c => c.code.substring(0, 2)))];
+  // Get unique departments safely
+  const departments = [...new Set(courses.map(c => c.code ? c.code.substring(0, 2) : "UN"))];
 
-  // Filter and sort courses
+  // Filter and sort courses robustly
   const filteredCourses = courses
     .filter(course => {
+      const courseName = course.name || course.title || "";
+      const courseCode = course.code || "";
+      const sTerm = searchTerm.toLowerCase();
+
       const matchesSearch = 
-        course.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        course.code.toLowerCase().includes(searchTerm.toLowerCase());
+        courseName.toLowerCase().includes(sTerm) ||
+        courseCode.toLowerCase().includes(sTerm);
       
       const matchesDepartment = 
-        filterDepartment === "All" || course.code.startsWith(filterDepartment);
+        filterDepartment === "All" || courseCode.startsWith(filterDepartment);
       
       const matchesCredits = 
         filterCredits === "All" || course.credits === parseInt(filterCredits);
@@ -51,13 +67,18 @@ function Courses() {
       return matchesSearch && matchesDepartment && matchesCredits;
     })
     .sort((a, b) => {
+      const nameA = a.name || a.title || "";
+      const nameB = b.name || b.title || "";
+      const codeA = a.code || "";
+      const codeB = b.code || "";
+
       switch (sortBy) {
         case "name":
-          return a.name.localeCompare(b.name);
+          return nameA.localeCompare(nameB);
         case "code":
-          return a.code.localeCompare(b.code);
+          return codeA.localeCompare(codeB);
         case "credits":
-          return b.credits - a.credits;
+          return (b.credits || 0) - (a.credits || 0);
         case "availability":
           return getAvailableSeats(b) - getAvailableSeats(a);
         default:
@@ -154,8 +175,8 @@ function Courses() {
               <h3>{course.name}</h3>
               
               <div className="course-meta">
-                <p>📅 <strong>Day:</strong> {course.day}</p>
-                <p>⏰ <strong>Time:</strong> {course.time}</p>
+                <p>📅 <strong>Day:</strong> {String(course.day || "TBA").trim() || "TBA"}</p>
+                <p>⏰ <strong>Time:</strong> {String(course.time || "TBA").trim() || "TBA"}</p>
                 <p>👥 <strong>Enrolled:</strong> {enrollCount}/{course.capacity}</p>
                 <p>
                   <strong>Available:</strong> 
@@ -163,11 +184,14 @@ function Courses() {
                     {" "}{availableSeats} seats
                   </span>
                 </p>
-                {course.prerequisites && course.prerequisites.length > 0 && (
+                {((Array.isArray(course.prerequisites) && course.prerequisites.length > 0) ||
+                  (!Array.isArray(course.prerequisites) && String(course.prerequisites || "").trim().length > 0)) && (
                   <p>
                     <strong>Prerequisites:</strong> 
                     <span className="prerequisites-text">
-                      {" "}{course.prerequisites.join(", ")}
+                      {" "}{Array.isArray(course.prerequisites)
+                        ? course.prerequisites.join(", ")
+                        : String(course.prerequisites || "").trim()}
                     </span>
                   </p>
                 )}
@@ -177,10 +201,22 @@ function Courses() {
                 <button className="enrolled-btn" disabled>
                   ✅ Already Enrolled
                 </button>
+              ) : isWaitlisted(course.code) ? (
+                <button className="waitlist-btn" disabled>
+                  ⏳ Waitlisted
+                </button>
+              ) : user?.registrationApproved !== 1 ? (
+                <button 
+                  className="locked-btn"
+                  disabled
+                  onClick={() => alert("🔒 Your account must be approved by an Admin before you can enroll in courses.")}
+                >
+                  🔒 Enrollment Locked
+                </button>
               ) : courseFull ? (
                 <button
                   className="waitlist-btn"
-                  onClick={() => enrollCourse(course)}
+                  onClick={() => joinWaitlist(course)}
                 >
                   ⏳ Join Waitlist
                 </button>

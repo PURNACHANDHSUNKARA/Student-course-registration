@@ -3,29 +3,39 @@ import { AuthContext } from "../context/AuthContext";
 
 function SupportManagement() {
   const { supportTickets, respondToTicket, updateTicketStatus } = useContext(AuthContext);
+  const safeTickets = Array.isArray(supportTickets) ? supportTickets : [];
   
   const [selectedTicket, setSelectedTicket] = useState(null);
   const [response, setResponse] = useState("");
   const [filterStatus, setFilterStatus] = useState("All");
 
-  const filteredTickets = filterStatus === "All" 
-    ? supportTickets 
-    : supportTickets.filter(t => t.status === filterStatus);
+  const normalizedFilter = filterStatus.toLowerCase();
+  const filteredTickets = filterStatus === "All"
+    ? safeTickets
+    : safeTickets.filter((t) => String(t?.status || "").toLowerCase() === normalizedFilter);
 
-  const handleRespond = (ticketId) => {
+  const handleRespond = async (ticketId) => {
     if (!response.trim()) {
       alert("⚠ Please enter a response");
       return;
     }
 
-    respondToTicket(ticketId, response);
-    alert("✅ Response sent successfully!");
-    setResponse("");
+    try {
+      await respondToTicket(ticketId, response);
+      alert("✅ Response sent successfully!");
+      setResponse("");
+    } catch {
+      // Error alerts are already shown by context methods.
+    }
   };
 
-  const handleStatusChange = (ticketId, newStatus) => {
-    updateTicketStatus(ticketId, newStatus);
-    alert(`✅ Ticket status updated to ${newStatus}`);
+  const handleStatusChange = async (ticketId, newStatus) => {
+    try {
+      await updateTicketStatus(ticketId, newStatus);
+      alert(`✅ Ticket status updated to ${newStatus}`);
+    } catch {
+      // Error alerts are already shown by context methods.
+    }
   };
 
   const getStatusColor = (status) => {
@@ -59,22 +69,22 @@ function SupportManagement() {
         <div className="stat-card stat-card-warning">
           <div className="stat-icon">📋</div>
           <h4>Total Tickets</h4>
-          <p>{supportTickets.length}</p>
+          <p>{safeTickets.length}</p>
         </div>
         <div className="stat-card stat-card-primary">
           <div className="stat-icon">🔓</div>
           <h4>Open Tickets</h4>
-          <p>{supportTickets.filter(t => t.status === "Open").length}</p>
+          <p>{safeTickets.filter((t) => String(t?.status || "").toLowerCase() === "open").length}</p>
         </div>
         <div className="stat-card stat-card-info">
           <div className="stat-icon">⏳</div>
           <h4>In Progress</h4>
-          <p>{supportTickets.filter(t => t.status === "In Progress").length}</p>
+          <p>{safeTickets.filter((t) => String(t?.status || "").toLowerCase() === "in progress").length}</p>
         </div>
         <div className="stat-card stat-card-success">
           <div className="stat-icon">✅</div>
           <h4>Resolved</h4>
-          <p>{supportTickets.filter(t => t.status === "Resolved").length}</p>
+          <p>{safeTickets.filter((t) => String(t?.status || "").toLowerCase() === "resolved").length}</p>
         </div>
       </div>
 
@@ -107,10 +117,10 @@ function SupportManagement() {
             <div key={ticket.id} className="card support-ticket-card">
               <div className="ticket-header-admin">
                 <div className="ticket-main-info">
-                  <h3>#{ticket.id} - {ticket.subject}</h3>
+                  <h3>#{ticket.id} - {ticket.subject || "No Subject"}</h3>
                   <div className="ticket-student-info">
-                    <span>👤 {ticket.studentUsername}</span>
-                    <span>📧 {ticket.studentEmail}</span>
+                    <span>👤 {ticket.studentUsername || "Unknown User"}</span>
+                    <span>📧 {ticket.studentEmail || "N/A"}</span>
                   </div>
                 </div>
                 <div className="ticket-badges">
@@ -118,41 +128,41 @@ function SupportManagement() {
                     className="badge-status"
                     style={{ background: getStatusColor(ticket.status) }}
                   >
-                    {ticket.status}
+                    {ticket.status || "OPEN"}
                   </span>
                   <span 
                     className="badge-priority"
                     style={{ borderColor: getPriorityColor(ticket.priority), color: getPriorityColor(ticket.priority) }}
                   >
-                    {ticket.priority}
+                    {ticket.priority || "Medium"}
                   </span>
-                  <span className="badge-category">{ticket.category}</span>
+                  <span className="badge-category">{ticket.category || "General"}</span>
                 </div>
               </div>
 
               <div className="ticket-details">
                 <p className="ticket-timestamp">
-                  Created: {new Date(ticket.createdAt).toLocaleString()}
+                  Created: {ticket.createdAt ? new Date(ticket.createdAt).toLocaleString() : "N/A"}
                 </p>
                 <div className="ticket-description-admin">
                   <strong>Issue Description:</strong>
-                  <p>{ticket.description}</p>
+                  <p>{ticket.description || "No description provided."}</p>
                 </div>
 
                 {/* Responses */}
-                {ticket.responses && ticket.responses.length > 0 && (
+                {Array.isArray(ticket.responses) && ticket.responses.length > 0 && (
                   <div className="responses-section">
                     <h4>💬 Conversation:</h4>
                     {ticket.responses.map((resp, idx) => (
                       <div key={idx} className={`response-bubble ${resp.role}`}>
                         <div className="response-bubble-header">
-                          <strong>{resp.by}</strong>
-                          <span className="role-badge">{resp.role}</span>
+                          <strong>{resp.by || resp.responseBy || "Support"}</strong>
+                          <span className="role-badge">{resp.role || resp.responseRole || "admin"}</span>
                           <span className="response-time">
-                            {new Date(resp.timestamp).toLocaleString()}
+                            {new Date(resp.timestamp || resp.createdAt || Date.now()).toLocaleString()}
                           </span>
                         </div>
-                        <p>{resp.message}</p>
+                        <p>{resp.message || ""}</p>
                       </div>
                     ))}
                   </div>

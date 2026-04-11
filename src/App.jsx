@@ -3,7 +3,7 @@ import { useContext } from "react";
 import { AuthContext } from "./context/AuthContext";
 
 import Login from "./pages/Login";
-import RoleSelect from "./pages/RoleSelect";
+import Signup from "./pages/Signup";
 import StudentDashboard from "./pages/StudentDashboard";
 import AdminDashboard from "./pages/AdminDashboard";
 import Courses from "./pages/Courses";
@@ -14,6 +14,7 @@ import Help from "./pages/Help";
 import SupportManagement from "./pages/SupportManagement";
 import Notifications from "./pages/Notifications";
 import CourseComparison from "./pages/CourseComparison";
+import AdminRegistrations from "./pages/AdminRegistrations";
 
 import Sidebar from "./components/Sidebar";
 import Navbar from "./components/Navbar";
@@ -41,8 +42,10 @@ function App() {
   return (
     <Router>
       <Routes>
-        <Route path="/" element={<RoleSelect />} />
+        <Route path="/" element={<Login />} />
+        <Route path="/login" element={<Login />} />
         <Route path="/login/:role" element={<Login />} />
+        <Route path="/register" element={<Signup />} />
 
         <Route path="/student" element={
           <ProtectedRoute>
@@ -90,6 +93,17 @@ function App() {
     <ProtectedRoute>
       <Layout>
         <AdminDashboard />
+      </Layout>
+    </ProtectedRoute>
+  }
+/>
+
+<Route
+  path="/admin/registrations"
+  element={
+    <ProtectedRoute>
+      <Layout>
+        <AdminRegistrations />
       </Layout>
     </ProtectedRoute>
   }

@@ -69,11 +69,15 @@ function AdminDashboard() {
   );
 
   return (
-    <div>
-      <h2 style={{ marginBottom: "10px" }}>📊 Admin Dashboard</h2>
-      <p style={{ marginBottom: "30px", color: "#555" }}>
+    <div className="page-container">
+      <div className="page-header">
+        <div>
+          <h2>📊 Admin Dashboard</h2>
+          <p className="subtitle">
         Overview of courses, students, and registrations
-      </p>
+          </p>
+        </div>
+      </div>
 
       <div className="dashboard-cards">
         <div className="card stat-card stat-card-primary">
@@ -261,7 +265,7 @@ function AdminDashboard() {
       </div>
 
       {/* Students by Course Section */}
-      <div className="card dashboard-section" style={{ marginTop: "20px" }}>
+      <div className="card dashboard-section">
         <h3>📋 Registered Students by Course</h3>
         <div className="students-by-course">
           {courses.map(course => {

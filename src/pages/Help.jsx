@@ -12,7 +12,7 @@ function Help() {
 
   const myTickets = supportTickets.filter(t => t.studentEmail === user?.email);
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     
     if (!subject || !description || !category) {
@@ -20,29 +20,33 @@ function Help() {
       return;
     }
 
-    const ticketId = createTicket({
-      subject,
-      description,
-      category,
-      priority
-    });
+    try {
+      const ticketId = await createTicket({
+        subject,
+        description,
+        category,
+        priority
+      });
 
-    alert(`✅ Ticket #${ticketId} created successfully! Admin will respond soon.`);
-    
-    // Reset form
-    setSubject("");
-    setDescription("");
-    setCategory("");
-    setPriority("Medium");
-    setShowForm(false);
+      alert(`✅ Ticket #${ticketId} created successfully! Admin will respond soon.`);
+
+      // Reset form
+      setSubject("");
+      setDescription("");
+      setCategory("");
+      setPriority("Medium");
+      setShowForm(false);
+    } catch {
+      // Error alerts are already handled in context methods.
+    }
   };
 
   const getStatusColor = (status) => {
-    switch (status) {
-      case "Open": return "#f59e0b";
-      case "In Progress": return "#3b82f6";
-      case "Resolved": return "#10b981";
-      case "Closed": return "#6b7280";
+    switch (String(status || "").toLowerCase()) {
+      case "open": return "#f59e0b";
+      case "in progress": return "#3b82f6";
+      case "resolved": return "#10b981";
+      case "closed": return "#6b7280";
       default: return "#94a3b8";
     }
   };

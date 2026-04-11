@@ -15,8 +15,12 @@ function Profile() {
 
   return (
     <div className="page-container">
-      <h2 style={{ marginBottom: "10px" }}>👤 My Profile</h2>
-      <p className="subtitle">View and manage your account information</p>
+      <div className="page-header">
+        <div>
+          <h2>👤 My Profile</h2>
+          <p className="subtitle">View and manage your account information</p>
+        </div>
+      </div>
 
       <div className="profile-container">
         <div className="card profile-card">
